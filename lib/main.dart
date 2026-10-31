@@ -150,7 +150,7 @@ void main() {
                           //يا عمر كيف أنت اليوم
                           children: [
                             Text(
-                              "رقم الهاتف",
+                              "namper  الهاتف",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
