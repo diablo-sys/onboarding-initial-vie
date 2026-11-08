@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'student_manual_input_screen.dart';
 
 /// 1. هويّة الألوان والتنسيق البصري (AppColors)
 class AppColors {
@@ -424,13 +425,21 @@ class StudentAccessCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            onPressed: _onManualTap,
+            onPressed: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const StudentManualInputScreen(),
+      ),
+    );
+  },
             icon: const Icon(Icons.edit_note_rounded, size: 20, color: AppColors.accentGold),
             label: const Text(
               "إدخال البيانات يدوياً",
               style: TextStyle(fontSize: 13.5),
             ),
           ),
+        
         ],
       ),
     );
