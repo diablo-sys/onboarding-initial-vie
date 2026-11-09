@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'student_manual_input_screen.dart';
 
-/// 1. هويّة الألوان والتنسيق البصري (AppColors)
+/// هويّة الألوان والتنسيق البصري (AppColors)
 class AppColors {
   // الألوان الرئيسية
   static const Color primaryPurple = Color(0xFF2A004E); // بنفسجي ملكي عميق
@@ -54,26 +54,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _profNameController = TextEditingController();
   final _profPhoneController = TextEditingController();
 
-  bool _isLoading = false;
+  final ValueNotifier<bool> _isLoading = ValueNotifier(false);
 
   @override
   void dispose() {
     _profNameController.dispose();
     _profPhoneController.dispose();
+    _isLoading.dispose();
     super.dispose();
   }
 
   // --- ربط الباك إند والسريان البرمجي (Backend Data Flow) ---
 
-  /// 1. مسار الطالب: تصوير البطاقة واستخراج الـ OCR ومعرف الجهاز (Device MAC)
+  /// مسار الطالب: تصوير البطاقة واستخراج الـ OCR ومعرف الجهاز (Device MAC)
   Future<void> _handleStudentOcrOnboarding() async {
-    setState(() => _isLoading = true);
+    _isLoading.value = true;
 
-    // محاكاة قراءة الرقم الأكاديمي التقاط الـ MAC Address
     const String simulatedStudentId = "20261055";
     const String simulatedDeviceMac = "A1:B2:C3:D4:E5:F6";
 
-    // إعداد طلب الـ JSON لسيرفر FastAPI (Python)
     final requestBody = {
       "action": "student_onboarding",
       "student_id": simulatedStudentId,
@@ -82,12 +81,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     debugPrint("Sending JSON to FastAPI: ${jsonEncode(requestBody)}");
 
-    // محاكاة الاتصال بالخادم
     await Future.delayed(const Duration(seconds: 2));
 
-    setState(() => _isLoading = false);
-
     if (!mounted) return;
+    _isLoading.value = false;
     _showSnackBar(
       "تم مسح البطاقة بنجاح! تم التقاط الرقم ($simulatedStudentId) والربط بالجهاز ($simulatedDeviceMac).",
       isError: false,
@@ -104,7 +101,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       return;
     }
 
-    setState(() => _isLoading = true);
+    _isLoading.value = true;
 
     final requestBody = {
       "action": "professor_activation_request",
@@ -117,11 +114,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     await Future.delayed(const Duration(seconds: 2));
 
-    setState(() => _isLoading = false);
-
     if (!mounted) return;
+    _isLoading.value = false;
 
-    // نافذة تنبيه أنيقة باللون البنفسجي والذهبي
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -130,8 +125,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           borderRadius: BorderRadius.circular(20),
           side: const BorderSide(color: AppColors.primaryGold, width: 2),
         ),
-        title: Row(
-          children: const [
+        title: const Row(
+          children: [
             Icon(Icons.check_circle_outline, color: AppColors.accentGold, size: 28),
             SizedBox(width: 10),
             Text(
@@ -196,38 +191,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
 
           // 2. زخارف هندسية خفيفة في الزوايا (Watermark Patterns)
-          Positioned(
+          const Positioned(
             top: -40,
             right: -40,
             child: Opacity(
               opacity: 0.15,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primaryGold, width: 3),
-                ),
-              ),
+              child: _DecorativeCircle(size: 200, color: AppColors.primaryGold, width: 3),
             ),
           ),
-          Positioned(
+          const Positioned(
             bottom: -50,
             left: -50,
             child: Opacity(
               opacity: 0.12,
-              child: Container(
-                width: 240,
-                height: 240,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.accentGold, width: 2),
-                ),
-              ),
+              child: _DecorativeCircle(size: 240, color: AppColors.accentGold, width: 2),
             ),
           ),
 
-          // 3. محتوى الشاشة مقسم إلى ثلاثة أجزاء عمودية متناسقة
+          // 3. محتوى الشاشة
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -235,32 +216,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ===== أولاً: الجزء العلوي (Header) =====
                     const HeaderSection(),
-
                     const SizedBox(height: 25),
-
-                    // ===== ثانياً: الجزء الأوسط (Body - Cards) =====
-                    // بطاقة حساب الطالب
                     StudentAccessCard(
                       onOcrTap: _handleStudentOcrOnboarding,
                       onManualTap: () {
-                        _showSnackBar("توجيه لشاشة الإدخال اليدوي للطالب...");
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const StudentManualInputScreen(),
+                          ),
+                        );
                       },
                     ),
-
                     const SizedBox(height: 20),
-
-                    // بطاقة حساب الأستاذ
                     ProfessorAccessCard(
                       nameController: _profNameController,
                       phoneController: _profPhoneController,
                       onSubmit: _handleProfessorActivationRequest,
                     ),
-
                     const SizedBox(height: 30),
-
-                    // ===== ثالثاً: الجزء السفلي (Footer) =====
                     const FooterSection(),
                   ],
                 ),
@@ -268,25 +243,56 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
 
-          // شاشة التحميل فوق الواجهة عند الإرسال
-          if (_isLoading)
-            Container(
-              color: Colors.black54,
-              child: const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.accentGold,
+          ValueListenableBuilder<bool>(
+            valueListenable: _isLoading,
+            builder: (context, isLoading, child) {
+              if (!isLoading) return const SizedBox.shrink();
+              return Positioned.fill(
+                child: Container(
+                  color: Colors.black54,
+                  child: const Center(
+                    child: CircularProgressIndicator(
+                      color: AppColors.accentGold,
+                    ),
+                  ),
                 ),
-              ),
-            ),
+              );
+            },
+          ),
         ],
       ),
     );
   }
 }
 
-// ================= مكونات الواجهة (Widgets Components) =================
+// ================= مكونات الواجهة المُحسّنة (Widgets Components) =================
 
-/// الجزء العلوي (Header)
+/// عنصر إضافي خاص بالزخارف لتقليل تكرار الأكواد (Performance Optimization)
+class _DecorativeCircle extends StatelessWidget {
+  final double size;
+  final Color color;
+  final double width;
+
+  const _DecorativeCircle({
+    required this.size,
+    required this.color,
+    required this.width,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: color, width: width),
+      ),
+    );
+  }
+}
+
+/// الجزء العلوي (Header) - تم إضافة const لتحسين الأداء
 class HeaderSection extends StatelessWidget {
   const HeaderSection({super.key});
 
@@ -294,7 +300,6 @@ class HeaderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // شعار النظام الأكاديمي مع إطار دائرية ذهبي مزخرف
         Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
@@ -319,8 +324,6 @@ class HeaderSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 15),
-
-        // العنوان الرئيسي
         const Text(
           "نظام الجدول الأكاديمي والأرشيف الذكي",
           textAlign: TextAlign.center,
@@ -332,8 +335,6 @@ class HeaderSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-
-        // العنوان الفرعي
         const Text(
           "مرحباً بك، يرجى اختيار نوع الحساب للمتابعة",
           textAlign: TextAlign.center,
@@ -350,15 +351,14 @@ class HeaderSection extends StatelessWidget {
 
 /// بطاقة "حساب طالب" (Student Access Card)
 class StudentAccessCard extends StatelessWidget {
-  final VoidCallback _onOcrTap;
-  final VoidCallback _onManualTap;
+  final VoidCallback onOcrTap;
+  final VoidCallback onManualTap;
 
   const StudentAccessCard({
     super.key,
-    required VoidCallback onOcrTap,
-    required VoidCallback onManualTap,
-  })  : _onOcrTap = onOcrTap,
-        _onManualTap = onManualTap;
+    required this.onOcrTap,
+    required this.onManualTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -367,7 +367,8 @@ class StudentAccessCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryGold.withOpacity(0.6), width: 1.5),
+        border: Border.all(
+            color: AppColors.primaryGold.withOpacity(0.6), width: 1.5),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
@@ -379,8 +380,8 @@ class StudentAccessCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.badge_outlined, color: AppColors.accentGold, size: 26),
               SizedBox(width: 10),
               Text(
@@ -393,9 +394,8 @@ class StudentAccessCard extends StatelessWidget {
               ),
             ],
           ),
-          const Divider(color: AppColors.primaryGold, thickness: 0.5, height: 20),
-
-          // الخيار 1: زر ذهبي عريض لتصوير البطاقة الجامعية
+          const Divider(
+              color: AppColors.primaryGold, thickness: 0.5, height: 20),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryGold,
@@ -406,7 +406,7 @@ class StudentAccessCard extends StatelessWidget {
               ),
               elevation: 4,
             ),
-            onPressed: _onOcrTap,
+            onPressed: onOcrTap,
             icon: const Icon(Icons.camera_alt_rounded, size: 20),
             label: const Text(
               "تسجيل آلي عبر تصوير البطاقة الجامعية",
@@ -414,8 +414,6 @@ class StudentAccessCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-
-          // الخيار 2: زر شفاف بحدود ذهبية للإدخال اليدوي
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.textGold,
@@ -425,21 +423,14 @@ class StudentAccessCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const StudentManualInputScreen(),
-      ),
-    );
-  },
-            icon: const Icon(Icons.edit_note_rounded, size: 20, color: AppColors.accentGold),
+            onPressed: onManualTap,
+            icon: const Icon(Icons.edit_note_rounded,
+                size: 20, color: AppColors.accentGold),
             label: const Text(
               "إدخال البيانات يدوياً",
               style: TextStyle(fontSize: 13.5),
             ),
           ),
-        
         ],
       ),
     );
@@ -466,7 +457,8 @@ class ProfessorAccessCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cardSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primaryGold.withOpacity(0.6), width: 1.5),
+        border: Border.all(
+            color: AppColors.primaryGold.withOpacity(0.6), width: 1.5),
         boxShadow: const [
           BoxShadow(
             color: Colors.black26,
@@ -478,9 +470,10 @@ class ProfessorAccessCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: const [
-              Icon(Icons.school_outlined, color: AppColors.accentGold, size: 26),
+          const Row(
+            children: [
+              Icon(Icons.school_outlined,
+                  color: AppColors.accentGold, size: 26),
               SizedBox(width: 10),
               Text(
                 "حساب أستاذ (Professor Access)",
@@ -492,52 +485,57 @@ class ProfessorAccessCard extends StatelessWidget {
               ),
             ],
           ),
-          const Divider(color: AppColors.primaryGold, thickness: 0.5, height: 20),
-
-          // حقل إدخال الاسم الثلاثي
+          const Divider(
+              color: AppColors.primaryGold, thickness: 0.5, height: 20),
           TextField(
             controller: nameController,
             style: const TextStyle(color: AppColors.textWhite, fontSize: 14),
             decoration: InputDecoration(
               labelText: "الاسم الثلاثي للأستاذ",
-              labelStyle: const TextStyle(color: AppColors.textGold, fontSize: 13),
-              prefixIcon: const Icon(Icons.person_outline, color: AppColors.accentGold, size: 20),
+              labelStyle:
+                  const TextStyle(color: AppColors.textGold, fontSize: 13),
+              prefixIcon: const Icon(Icons.person_outline,
+                  color: AppColors.accentGold, size: 20),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.primaryGold.withOpacity(0.5)),
+                borderSide:
+                    BorderSide(color: AppColors.primaryGold.withOpacity(0.5)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.accentGold, width: 1.5),
+                borderSide:
+                    const BorderSide(color: AppColors.accentGold, width: 1.5),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
           ),
           const SizedBox(height: 12),
-
-          // حقل إدخال رقم المحمول (الواتس آب)
           TextField(
             controller: phoneController,
             keyboardType: TextInputType.phone,
             style: const TextStyle(color: AppColors.textWhite, fontSize: 14),
             decoration: InputDecoration(
               labelText: "رقم المحمول المربوط بحساب الواتس آب",
-              labelStyle: const TextStyle(color: AppColors.textGold, fontSize: 13),
-              prefixIcon: const Icon(Icons.phone_android_outlined, color: AppColors.accentGold, size: 20),
+              labelStyle:
+                  const TextStyle(color: AppColors.textGold, fontSize: 13),
+              prefixIcon: const Icon(Icons.phone_android_outlined,
+                  color: AppColors.accentGold, size: 20),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: AppColors.primaryGold.withOpacity(0.5)),
+                borderSide:
+                    BorderSide(color: AppColors.primaryGold.withOpacity(0.5)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.accentGold, width: 1.5),
+                borderSide:
+                    const BorderSide(color: AppColors.accentGold, width: 1.5),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
           ),
           const SizedBox(height: 16),
-
-          // الزر الرئيسي لإرسال طلب التفعيل
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.secondaryPurple,
@@ -545,12 +543,14 @@ class ProfessorAccessCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: AppColors.primaryGold, width: 1.5),
+                side:
+                    const BorderSide(color: AppColors.primaryGold, width: 1.5),
               ),
               elevation: 3,
             ),
             onPressed: onSubmit,
-            icon: const Icon(Icons.send_rounded, size: 18, color: AppColors.accentGold),
+            icon: const Icon(Icons.send_rounded,
+                size: 18, color: AppColors.accentGold),
             label: const Text(
               "إرسال طلب التفعيل إلى الإدارة",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5),
@@ -568,9 +568,9 @@ class FooterSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return const Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: const [
+      children: [
         Icon(Icons.security_rounded, color: AppColors.textGold, size: 14),
         SizedBox(width: 6),
         Flexible(
