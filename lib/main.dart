@@ -29,7 +29,7 @@ class AcademicSystemApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'نظام الجدول الأكاديمي والأرشيف الذكي',
+      title: 'نظام ادارة الجداول الاكاديمي الذكي',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
@@ -325,7 +325,7 @@ class HeaderSection extends StatelessWidget {
         ),
         const SizedBox(height: 15),
         const Text(
-          "نظام الجدول الأكاديمي والأرشيف الذكي",
+          "نظام ادارة الجداول الاكاديمي الذكي",
           textAlign: TextAlign.center,
           style: TextStyle(
             color: AppColors.textGold,
