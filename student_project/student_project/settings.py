@@ -79,16 +79,13 @@ WSGI_APPLICATION = 'student_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'postgres',        # اسم قاعدة البيانات لديك
-        'USER': 'postgres',        # اسم المستخدم
-        'PASSWORD': '123', # استبدل هذه بكلمة المرور الخاصة بك في pgAdmin
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'PASSWORD': '123',
         'HOST': 'localhost',
         'PORT': '5432',
     }
-}
-
-
-# Password validation
+}# Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [

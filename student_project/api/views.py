@@ -16,16 +16,17 @@ def register_student(request):
         if not student:
             return Response({"error": "الرقم الأكاديمي غير مسجل في قاعدة البيانات."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # التحقق من تطابق الاسم والقسم
-        if student.full_name.strip() != full_name or student.major.strip().lower() != department.lower():
+        # التحقق من تطابق الاسم القسم
+        if student.full_name.strip() != full_name or student.department.strip().lower() != department.lower():
             return Response({"error": "الاسم أو القسم الدراسي غير مطابق للبيانات المسجلة."}, status=status.HTTP_400_BAD_REQUEST)
 
         # منطق ربط الجهاز (Device Binding)
-        if not student.device_mac:
-            # أول مرة يسجل الدخول، نقوم بتخزين معرف جهازه الفريد
-            student.device_mac = device_id
+        if not student.device_unique_id:
+            # أول مرة يسجل الدخول، نقوم بتخزين معرف جهازه الفريد وتفعيل حسابه
+            student.device_unique_id = device_id
+            student.status = 'active' # تغيير الحالة إلى نشط بعد ربط الجهاز بنجاح
             student.save()
-        elif student.device_mac != device_id:
+        elif student.device_unique_id != device_id:
             # محاولة الدخول من جهاز آخر مختلف
             return Response({"error": "هذا الحساب مرتبط بهاتف آخر ولا يمكن تسجيل الدخول منه."}, status=status.HTTP_403_FORBIDDEN)
 
